@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% block title %}My Profile{% endblock %}
+{% block page_title %}My Profile{% endblock %}
+
+{% block content %}
+<div style="padding:28px;">
+  <div class="profile-header">
+    <div class="profile-av">{{ user.initials }}</div>
+    <div>
+      <div class="profile-name">{{ user.full_name }}</div>
+      <div class="profile-meta">{{ user.email }} · {{ user.get_role_display }} · Member since {{ user.date_joined|date:"M Y" }}</div>
+      <div style="margin-top:10px;display:flex;gap:8px;">
+        <span class="tag green">{{ user.get_status_display }}</span>
+        <span class="tag purple">{{ user.get_role_display }}</span>
+      </div>
+    </div>
+    <div class="topbar-spacer"></div>
+    <div style="text-align:right;">
+      <div style="font-size:12px;color:var(--text3);margin-bottom:4px;">{{ tx_count }} transactions</div>
+      <div style="font-size:12px;color:var(--accent2);">↑ {{ total_income|floatformat:3 }} TND income</div>
+      <div style="font-size:12px;color:var(--text2);">↓ {{ total_expense|floatformat:3 }} TND expenses</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <!-- Personal info -->
+    <div class="card">
+      <div class="section-title" style="margin-bottom:18px;">Personal information</div>
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">First name</label>
+            <input class="form-input" type="text" name="first_name" value="{{ user.first_name }}" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Last name</label>
+            <input class="form-input" type="text" name="last_name" value="{{ user.last_name }}" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input class="form-input" type="email" value="{{ user.email }}" disabled style="opacity:.5;">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Phone</label>
+          <input class="form-input" type="text" name="phone" value="{{ user.phone }}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Profile photo</label>
+          <input class="form-input" type="file" name="avatar" accept="image/*">
+        </div>
+        <button type="submit" name="update_profile" class="btn btn-primary">Save changes</button>
+      </form>
+    </div>
+
+    <!-- Security -->
+    <div class="card">
+      <div class="section-title" style="margin-bottom:18px;">Security</div>
+      <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+          <label class="form-label">Current password</label>
+          <input class="form-input" type="password" name="current_password" placeholder="••••••••" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">New password</label>
+          <input class="form-input" type="password" name="new_password" placeholder="••••••••" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Confirm new password</label>
+          <input class="form-input" type="password" name="confirm_password" placeholder="••••••••" required>
+        </div>
+        <button type="submit" name="change_password" class="btn btn-primary">Update password</button>
+      </form>
+
+      <div style="margin-top:24px;padding-top:20px;border-top:1px solid var(--border);">
+        <div class="section-title" style="color:var(--red);margin-bottom:12px;">Danger zone</div>
+        {% if user.status == 'deletion_requested' %}
+        <div class="alert-item warn" style="margin-bottom:12px;">
+          <div class="alert-icon">⏳</div>
+          <div class="alert-text"><div class="alert-desc">Account deletion pending admin review.</div></div>
+        </div>
+        {% else %}
+        <form method="post" onsubmit="return confirm('Request account deletion? This cannot be undone.')">
+          {% csrf_token %}
+          <button type="submit" name="request_deletion" class="btn btn-danger">Request account deletion</button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
