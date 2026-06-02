@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  body { font-family: 'Segoe UI', sans-serif; background:#0a0b0f; color:#f1f5f9; margin:0; padding:20px; }
+  .container { max-width:500px; margin:0 auto; background:#111318; border-radius:16px; padding:32px; }
+  .logo { font-size:20px; font-weight:800; text-align:center; margin-bottom:24px; }
+  .logo span { color:#6ee7b7; }
+  p { color:#94a3b8; font-size:14px; line-height:1.7; }
+  .info { background:#1e2230; border-radius:10px; padding:16px; margin:16px 0; }
+  .row { display:flex; justify-content:space-between; padding:5px 0; font-size:13px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="logo">Budget<span>Flow</span> Admin</div>
+  <h2 style="color:#f87171;">Account Deletion Request</h2>
+  <p>A user has requested account deletion and requires admin review.</p>
+  <div class="info">
+    <div class="row"><span style="color:#475569;">Name</span><span>{{ user.full_name }}</span></div>
+    <div class="row"><span style="color:#475569;">Email</span><span>{{ user.email }}</span></div>
+    <div class="row"><span style="color:#475569;">Joined</span><span>{{ user.date_joined|date:"M d, Y" }}</span></div>
+  </div>
+  <p>Please go to the admin panel to approve or cancel this deletion request.</p>
+</div>
+</body>
+</html>
