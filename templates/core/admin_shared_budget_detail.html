@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+{% block title %}{{ sb.name }} — Admin{% endblock %}
+{% block page_title %}{{ sb.emoji }} {{ sb.name }} — Admin View{% endblock %}
+
+{% block content %}
+<div style="padding:28px;">
+
+  <!-- BREADCRUMB -->
+  <div style="margin-bottom:20px;font-size:13px;color:var(--text3);">
+    <a href="{% url 'admin_panel' %}"
+       style="color:var(--text3);text-decoration:none;">Admin Panel</a>
+    →
+    <a href="{% url 'admin_shared_budgets' %}"
+       style="color:var(--text3);text-decoration:none;">Shared Budgets</a>
+    → {{ sb.name }}
+  </div>
+
+  <!-- STATS -->
+  <div class="grid-3" style="margin-bottom:20px;">
+    <div class="stat-card green">
+      <div class="stat-label">Total Ceiling</div>
+      <div class="stat-value">{{ sb.total_ceiling|floatformat:3 }} TND</div>
+      <div class="stat-change">{{ sb.get_period_display }}</div>
+    </div>
+    <div class="stat-card blue">
+      <div class="stat-label">Total Spent</div>
+      <div class="stat-value">{{ sb.total_spent|floatformat:3 }} TND</div>
+      <div class="stat-change">{{ sb.percentage|floatformat:0 }}% used</div>
+    </div>
+    <div class="stat-card orange">
+      <div class="stat-label">Members</div>
+      <div class="stat-value">{{ members.count }}</div>
+      <div class="stat-change">Owner: {{ sb.owner.full_name }}</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+
+    <!-- TRANSACTIONS -->
+    <div class="card" style="padding:0;overflow:hidden;">
+      <div style="padding:16px 20px;border-bottom:1px solid var(--border);">
+        <span class="section-title">
+          All Transactions ({{ transactions|length }})
+        </span>
+      </div>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Description</th>
+            <th>By</th>
+            <th>Category</th>
+            <th>Date</th>
+            <th>Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for tx in transactions %}
+          <tr>
+            <td style="font-weight:500;">{{ tx.description }}</td>
+            <td style="font-size:13px;color:var(--text2);">
+              {{ tx.user.full_name }}
+            </td>
+            <td>
+              {% if tx.category %}
+              <span class="tag blue">
+                {{ tx.category.icon }} {{ tx.category.name }}
+              </span>
+              {% else %}
+              <span class="tag gray">None</span>
+              {% endif %}
+            </td>
+            <td style="font-size:13px;color:var(--text2);">
+              {{ tx.date }}
+            </td>
+            <td style="font-weight:700;
+              {% if tx.type == 'income' %}color:var(--accent2){% endif %}">
+              {% if tx.type == 'income' %}+{% else %}−{% endif %}
+              {{ tx.amount|floatformat:3 }} TND
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5">
+              <div class="empty">
+                <div class="empty-text">No transactions.</div>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- MEMBERS -->
+    <div class="card">
+      <div class="section-title" style="margin-bottom:16px;">
+        Members ({{ members.count }})
+      </div>
+      {% for member in members %}
+      <div style="display:flex;align-items:center;gap:12px;
+                  padding:12px;background:var(--surface);
+                  border-radius:10px;margin-bottom:8px;">
+        <div class="avatar" style="width:36px;height:36px;font-size:12px;">
+          {{ member.user.initials }}
+        </div>
+        <div style="flex:1;">
+          <div style="font-weight:600;font-size:14px;">
+            {{ member.user.full_name }}
+          </div>
+          <div style="font-size:12px;color:var(--text3);">
+            {{ member.user.email }}
+          </div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px;">
+            Joined {{ member.joined_at|date:"M d, Y" }}
+          </div>
+        </div>
+        <span class="tag {% if member.role == 'owner' %}purple{% else %}blue{% endif %}">
+          {{ member.role }}
+        </span>
+      </div>
+      {% endfor %}
+
+      <div style="margin-top:16px;padding-top:16px;
+                  border-top:1px solid var(--border);">
+        <div style="font-size:12px;color:var(--text3);margin-bottom:8px;">
+          Invite Code
+        </div>
+        <div style="font-size:20px;font-weight:800;color:var(--accent);
+                    letter-spacing:4px;font-family:monospace;">
+          {{ sb.invite_code }}
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
