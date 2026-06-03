@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  /* ── RESET ── */
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #0a0b0f;
+    color: #f1f5f9;
+    padding: 24px 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrapper {
+    max-width: 580px;
+    margin: 0 auto;
+  }
+
+  /* ── CARD ── */
+  .card {
+    background: #111318;
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 20px;
+    overflow: hidden;
+  }
+
+  /* ── TOP ACCENT BAR ── */
+  .accent-bar {
+    height: 3px;
+    background: linear-gradient(90deg, #6ee7b7, #60a5fa, #a78bfa);
+  }
+
+  /* ── HEADER ── */
+  .header {
+    background: linear-gradient(
+      135deg,
+      rgba(110,231,183,0.12) 0%,
+      rgba(96,165,250,0.08) 50%,
+      rgba(167,139,250,0.06) 100%
+    );
+    padding: 40px 32px 32px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+  }
+
+  .logo-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+
+  .logo-icon {
+    width: 36px;
+    height: 36px;
+    background: #6ee7b7;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+  }
+
+  .logo-text {
+    font-size: 20px;
+    font-weight: 800;
+    color: #f1f5f9;
+    letter-spacing: -0.5px;
+  }
+
+  .logo-text span { color: #6ee7b7; }
+
+  .budget-emoji {
+    font-size: 56px;
+    display: block;
+    margin-bottom: 16px;
+    line-height: 1;
+  }
+
+  .header-tag {
+    display: inline-block;
+    background: rgba(110,231,183,0.15);
+    border: 1px solid rgba(110,231,183,0.25);
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #6ee7b7;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+
+  .header-title {
+    font-size: 28px;
+    font-weight: 800;
+    color: #f1f5f9;
+    letter-spacing: -0.5px;
+    margin-bottom: 10px;
+    line-height: 1.2;
+  }
+
+  .header-sub {
+    font-size: 15px;
+    color: #94a3b8;
+    line-height: 1.6;
+  }
+
+  .header-sub strong { color: #6ee7b7; }
+
+  /* ── BODY ── */
+  .body { padding: 32px; }
+
+  /* ── FROM CARD ── */
+  .from-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: #1e2230;
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 24px;
+  }
+
+  .from-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #6ee7b7, #60a5fa);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 800;
+    color: #0a0b0f;
+    flex-shrink: 0;
+  }
+
+  .from-label {
+    font-size: 11px;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    font-weight: 600;
+    margin-bottom: 3px;
+  }
+
+  .from-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: #f1f5f9;
+  }
+
+  .from-email {
+    font-size: 12px;
+    color: #94a3b8;
+    margin-top: 2px;
+  }
+
+  /* ── BUDGET BOX ── */
+  .budget-box {
+    background: linear-gradient(
+      135deg,
+      rgba(110,231,183,0.08),
+      rgba(96,165,250,0.05)
+    );
+    border: 1px solid rgba(110,231,183,0.15);
+    border-radius: 14px;
+    padding: 20px;
+    text-align: center;
+    margin-bottom: 24px;
+  }
+
+  .budget-box-name {
+    font-size: 22px;
+    font-weight: 800;
+    color: #f1f5f9;
+    margin-bottom: 10px;
+  }
+
+  .budget-stats {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .budget-stat {
+    text-align: center;
+  }
+
+  .budget-stat-val {
+    font-size: 16px;
+    font-weight: 700;
+    color: #6ee7b7;
+  }
+
+  .budget-stat-label {
+    font-size: 11px;
+    color: #475569;
+    margin-top: 2px;
+  }
+
+  /* ── INVITE CODE BOX ── */
+  .code-section {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+
+  .code-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+  }
+
+  .code-box {
+    display: inline-block;
+    background: rgba(110,231,183,0.1);
+    border: 2px dashed rgba(110,231,183,0.35);
+    border-radius: 14px;
+    padding: 18px 32px;
+  }
+
+  .code-value {
+    font-size: 34px;
+    font-weight: 800;
+    color: #6ee7b7;
+    letter-spacing: 8px;
+    font-family: 'Courier New', monospace;
+  }
+
+  .code-note {
+    font-size: 11px;
+    color: #475569;
+    margin-top: 8px;
+  }
+
+  /* ── CTA BUTTON ── */
+  .btn-wrap {
+    text-align: center;
+    margin-bottom: 12px;
+  }
+
+  .btn-cta {
+    display: inline-block;
+    background: #6ee7b7;
+    color: #0a0b0f;
+    text-decoration: none;
+    padding: 16px 40px;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: -0.3px;
+  }
+
+  .btn-note {
+    text-align: center;
+    font-size: 12px;
+    color: #475569;
+    margin-bottom: 24px;
+  }
+
+  /* ── DIVIDER ── */
+  .divider {
+    height: 1px;
+    background: rgba(255,255,255,0.06);
+    margin: 24px 0;
+  }
+
+  /* ── STEPS ── */
+  .steps-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #f1f5f9;
+    margin-bottom: 14px;
+  }
+
+  .step {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .step-num {
+    width: 26px;
+    height: 26px;
+    background: rgba(110,231,183,0.15);
+    border: 1px solid rgba(110,231,183,0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: #6ee7b7;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .step-text {
+    font-size: 13px;
+    color: #94a3b8;
+    line-height: 1.6;
+  }
+
+  .step-text strong { color: #f1f5f9; }
+  .step-text code {
+    background: rgba(110,231,183,0.1);
+    color: #6ee7b7;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 13px;
+    letter-spacing: 2px;
+    font-weight: 700;
+  }
+
+  /* ── FOOTER ── */
+  .footer {
+    background: #0d0f14;
+    border-top: 1px solid rgba(255,255,255,0.05);
+    padding: 24px 32px;
+    text-align: center;
+  }
+
+  .footer-logo {
+    font-size: 16px;
+    font-weight: 800;
+    color: #f1f5f9;
+    margin-bottom: 8px;
+  }
+
+  .footer-logo span { color: #6ee7b7; }
+
+  .footer-text {
+    font-size: 11px;
+    color: #475569;
+    line-height: 1.8;
+  }
+
+  .footer-ignore {
+    font-size: 11px;
+    color: #334155;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255,255,255,0.04);
+  }
+</style>
+</head>
+<body>
+<div class="wrapper">
+<div class="card">
+
+  <!-- ACCENT BAR -->
+  <div class="accent-bar"></div>
+
+  <!-- HEADER -->
+  <div class="header">
+    <!-- LOGO -->
+    <div class="logo-wrap">
+      <div class="logo-icon">💰</div>
+      <div class="logo-text">Budget<span>Flow</span></div>
+    </div>
+
+    <!-- BUDGET EMOJI -->
+    <span class="budget-emoji">{{ budget.emoji }}</span>
+
+    <!-- TAG -->
+    <div class="header-tag">✦ Budget Invitation</div>
+
+    <!-- TITLE -->
+    <div class="header-title">You're Invited! 🎉</div>
+
+    <!-- SUBTITLE -->
+    <div class="header-sub">
+      <strong>{{ invited_by.full_name }}</strong>
+      wants you to join their shared budget on BudgetFlow
+    </div>
+  </div>
+
+  <!-- BODY -->
+  <div class="body">
+
+    <!-- FROM CARD -->
+    <div class="from-card">
+      <div class="from-avatar">{{ invited_by.initials }}</div>
+      <div>
+        <div class="from-label">Invitation from</div>
+        <div class="from-name">{{ invited_by.full_name }}</div>
+        <div class="from-email">{{ invited_by.email }}</div>
+      </div>
+    </div>
+
+    <!-- BUDGET INFO -->
+    <div class="budget-box">
+      <div class="budget-box-name">{{ budget.name }}</div>
+      <div class="budget-stats">
+        <div class="budget-stat">
+          <div class="budget-stat-val">
+            {{ budget.members.count }}
+          </div>
+          <div class="budget-stat-label">Members</div>
+        </div>
+        <div class="budget-stat">
+          <div class="budget-stat-val">
+            {{ budget.get_period_display }}
+          </div>
+          <div class="budget-stat-label">Period</div>
+        </div>
+        <div class="budget-stat">
+          <div class="budget-stat-val">
+            {{ budget.total_ceiling|floatformat:3 }} TND
+          </div>
+          <div class="budget-stat-label">Budget</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INVITE CODE -->
+    <div class="code-section">
+      <div class="code-label">Your Invite Code</div>
+      <div class="code-box">
+        <div class="code-value">{{ invite_code }}</div>
+        <div class="code-note">
+          Use this code at Shared Budgets → Join with code
+        </div>
+      </div>
+    </div>
+
+    <!-- CTA BUTTON -->
+    <div class="btn-wrap">
+      <a href="{{ join_url }}" class="btn-cta">
+        🎉 Accept Invitation →
+      </a>
+    </div>
+    <div class="btn-note">
+      Or join manually using the code above
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- HOW TO JOIN -->
+    <div class="steps-title">How to join:</div>
+
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-text">
+        Click <strong>Accept Invitation</strong> above,
+        or go to BudgetFlow and sign in to your account
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-text">
+        Go to <strong>Shared Budgets</strong> in the sidebar
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-text">
+        Click <strong>Join with code</strong> and enter:
+        <code>{{ invite_code }}</code>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-text">
+        Start managing your finances together with
+        <strong>{{ invited_by.first_name }}</strong>! 🎉
+      </div>
+    </div>
+
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <div class="footer-logo">Budget<span>Flow</span></div>
+    <div class="footer-text">
+      Collaborative Finance · Secure · Simple · Smart
+    </div>
+    <div class="footer-ignore">
+      This email was sent because {{ invited_by.full_name }}
+      ({{ invited_by.email }}) invited you to join their budget.<br>
+      If you don't know this person, you can safely ignore this email.
+    </div>
+  </div>
+
+</div>
+</div>
+</body>
+</html>
