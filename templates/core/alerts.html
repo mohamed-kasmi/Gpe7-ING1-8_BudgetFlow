@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% block title %}Alerts{% endblock %}
+{% block page_title %}Alerts{% endblock %}
+
+{% block content %}
+<div style="padding:28px;">
+  <div class="section-header" style="margin-bottom:20px;">
+    <span style="font-size:13px;color:var(--text2);">{{ alerts.count }} alert(s)</span>
+    <div class="topbar-spacer"></div>
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="dismiss_all">
+      <button type="submit" class="btn btn-ghost btn-sm">Mark all read</button>
+    </form>
+  </div>
+
+  <div class="grid-65-35">
+    <div>
+      {% for alert in alerts %}
+      <div class="alert-item {{ alert.level }}" style="{% if alert.is_read %}opacity:.5{% endif %}">
+        <div class="alert-icon">
+          {% if alert.level == 'danger' %}🚨{% elif alert.level == 'warn' %}⚠️{% else %}ℹ️{% endif %}
+        </div>
+        <div class="alert-text" style="flex:1;">
+          <div class="alert-title">{{ alert.title }}</div>
+          <div class="alert-desc">{{ alert.message }}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:4px;">{{ alert.created_at|timesince }} ago</div>
+        </div>
+        {% if not alert.is_read %}
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="dismiss">
+          <input type="hidden" name="alert_id" value="{{ alert.id }}">
+          <button type="submit" class="btn btn-ghost btn-sm" style="white-space:nowrap;">Dismiss</button>
+        </form>
+        {% endif %}
+      </div>
+      {% empty %}
+      <div class="empty">
+        <div class="empty-icon">🔔</div>
+        <div class="empty-text">No alerts. You're all good!</div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="card">
+      <div class="section-title" style="margin-bottom:16px;">Alert settings</div>
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <input type="checkbox" checked id="a1" style="accent-color:var(--accent);width:16px;height:16px;">
+          <label for="a1" style="font-size:13px;color:var(--text2);cursor:pointer;">Budget exceeded</label>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <input type="checkbox" checked id="a2" style="accent-color:var(--accent);width:16px;height:16px;">
+          <label for="a2" style="font-size:13px;color:var(--text2);cursor:pointer;">Near limit (90%)</label>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <input type="checkbox" id="a3" style="accent-color:var(--accent);width:16px;height:16px;">
+          <label for="a3" style="font-size:13px;color:var(--text2);cursor:pointer;">Near limit (75%)</label>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <input type="checkbox" checked id="a4" style="accent-color:var(--accent);width:16px;height:16px;">
+          <label for="a4" style="font-size:13px;color:var(--text2);cursor:pointer;">Shared budget updates</label>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <input type="checkbox" checked id="a5" style="accent-color:var(--accent);width:16px;height:16px;">
+          <label for="a5" style="font-size:13px;color:var(--text2);cursor:pointer;">Monthly summary</label>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

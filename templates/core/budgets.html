@@ -1,0 +1,284 @@
+{% extends 'base.html' %}
+{% block title %}Budgets{% endblock %}
+{% block page_title %}Budgets{% endblock %}
+
+{% block content %}
+<div style="padding:28px;">
+
+  <!-- TOP BAR -->
+  <div class="section-header" style="margin-bottom:20px;">
+    <div class="topbar-spacer"></div>
+    <button class="btn btn-primary"
+            onclick="openModal('modal-add-budget')">
+      + New budget
+    </button>
+  </div>
+
+  <!-- STATS ROW -->
+  <div class="grid-3" style="margin-bottom:24px;">
+    <div class="stat-card green">
+      <div class="stat-label">Total budget ceiling</div>
+      <div class="stat-value">{{ total_ceiling|floatformat:3 }} TND</div>
+      <div class="stat-change">All active budgets</div>
+    </div>
+    <div class="stat-card blue">
+      <div class="stat-label">Spent so far</div>
+      <div class="stat-value">{{ total_spent|floatformat:3 }} TND</div>
+      <div class="stat-change">Within date ranges</div>
+    </div>
+    <div class="stat-card {% if total_remaining < 0 %}red{% else %}orange{% endif %}">
+      <div class="stat-label">Remaining</div>
+      <div class="stat-value"
+           style="{% if total_remaining < 0 %}color:var(--red){% endif %}">
+        {{ total_remaining|floatformat:3 }} TND
+      </div>
+      <div class="stat-change">
+        {% if total_remaining < 0 %}Over budget!{% else %}Available{% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- BUDGETS LIST -->
+  <div class="card">
+    <div class="section-header">
+      <span class="section-title">Your budgets</span>
+    </div>
+
+    {% if budgets %}
+    <div style="display:flex;flex-direction:column;gap:20px;">
+      {% for b in budgets %}
+      <div style="padding-bottom:20px;
+                  border-bottom:1px solid var(--border);">
+
+        <!-- BUDGET HEADER ROW -->
+        <div style="display:flex;align-items:center;
+                    gap:12px;margin-bottom:10px;flex-wrap:wrap;">
+
+          <!-- NAME + CATEGORY BADGE -->
+          <div style="flex:1;">
+            <div style="display:flex;align-items:center;gap:8px;
+                        flex-wrap:wrap;">
+              <span style="font-size:15px;font-weight:700;
+                           color:var(--text);">
+                {{ b.name }}
+              </span>
+              {% if b.category %}
+              <span class="tag blue">
+                {{ b.category.icon }} {{ b.category.name }}
+              </span>
+              {% else %}
+              <span class="tag gray">All categories</span>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- STATUS BADGE -->
+          {% if b.status == 'over' %}
+          <span class="tag red">Over budget!</span>
+          {% elif b.status == 'warn' %}
+          <span class="tag orange">Near limit</span>
+          {% else %}
+          <span class="tag green">On track</span>
+          {% endif %}
+
+          <!-- NUMBERS -->
+          <span style="font-size:13px;color:var(--text2);white-space:nowrap;">
+            <strong style="color:var(--text);">
+              {{ b.spent|floatformat:3 }}
+            </strong>
+            / {{ b.total_ceiling|floatformat:3 }} TND ·
+            <strong style="
+              color:{% if b.percentage >= 100 %}var(--red)
+              {% elif b.percentage >= 90 %}var(--orange)
+              {% else %}var(--accent){% endif %}">
+              {{ b.percentage|floatformat:1 }}%
+            </strong>
+          </span>
+
+          <!-- DELETE -->
+          <form method="post"
+                onsubmit="return confirm('Delete budget {{ b.name }}?')">
+            {% csrf_token %}
+            <input type="hidden" name="delete_budget" value="1">
+            <input type="hidden" name="budget_id" value="{{ b.id }}">
+            <button type="submit" class="btn btn-danger btn-sm">
+              Delete
+            </button>
+          </form>
+        </div>
+
+        <!-- PROGRESS BAR -->
+        <div class="progress-track" style="height:10px;">
+          <div class="progress-fill {{ b.status }}"
+               style="width:{% if b.percentage > 100 %}100{% else %}{{ b.percentage|floatformat:0 }}{% endif %}%">
+          </div>
+        </div>
+
+        <!-- DATE RANGE + REMAINING -->
+        <div style="display:flex;justify-content:space-between;
+                    margin-top:6px;font-size:12px;color:var(--text3);">
+          <span>
+            {{ b.get_period_display }} ·
+            {{ b.start_date|date:"M d, Y" }} →
+            {% if b.end_date %}
+              {{ b.end_date|date:"M d, Y" }}
+            {% else %}
+              ongoing
+            {% endif %}
+          </span>
+          <span>
+            Remaining:
+            <strong style="
+              color:{% if b.remaining < 0 %}var(--red)
+              {% elif b.remaining < 100 %}var(--orange)
+              {% else %}var(--accent2){% endif %};">
+              {{ b.remaining|floatformat:3 }} TND
+            </strong>
+          </span>
+        </div>
+
+        <!-- OVER BUDGET WARNING -->
+        {% if b.status == 'over' %}
+        <div style="margin-top:8px;padding:8px 12px;
+                    background:rgba(248,113,113,0.08);
+                    border:1px solid rgba(248,113,113,0.2);
+                    border-radius:8px;font-size:12px;color:var(--red);">
+          🚨 You exceeded this budget by
+          {{ b.remaining|floatformat:3|slice:"1:" }} TND
+        </div>
+        {% elif b.status == 'warn' %}
+        <div style="margin-top:8px;padding:8px 12px;
+                    background:rgba(251,146,60,0.08);
+                    border:1px solid rgba(251,146,60,0.2);
+                    border-radius:8px;font-size:12px;color:var(--orange);">
+          ⚠ Only {{ b.remaining|floatformat:3 }} TND remaining
+        </div>
+        {% endif %}
+
+      </div>
+      {% endfor %}
+    </div>
+
+    {% else %}
+    <div class="empty">
+      <div class="empty-icon">📊</div>
+      <div style="font-family:var(--font-head);font-size:16px;
+                  font-weight:700;color:var(--text);margin-bottom:8px;">
+        No budgets yet
+      </div>
+      <div class="empty-text" style="margin-bottom:16px;">
+        Create a budget to start tracking your spending.
+      </div>
+      <button class="btn btn-primary"
+              onclick="openModal('modal-add-budget')">
+        + Create first budget
+      </button>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}
+
+
+{% block modals %}
+<!-- ADD BUDGET MODAL -->
+<div class="modal-overlay" id="modal-add-budget"
+     onclick="closeModalOut(event,'modal-add-budget')">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">New budget</span>
+      <div class="modal-close"
+           onclick="closeModal('modal-add-budget')">✕</div>
+    </div>
+
+    <form method="post">
+      {% csrf_token %}
+
+      <!-- NAME -->
+      <div class="form-group">
+        <label class="form-label">Budget name *</label>
+        <input class="form-input" type="text" name="name"
+               placeholder="e.g. May 2026 — Food"
+               required>
+      </div>
+
+      <!-- CATEGORY (optional) -->
+      <div class="form-group">
+        <label class="form-label">
+          Category
+          <span style="color:var(--text3);font-weight:400;">
+            (optional — leave empty to track ALL expenses)
+          </span>
+        </label>
+        <select class="form-select" name="category">
+          <option value="">🗂 All categories (no filter)</option>
+          {% for cat in categories %}
+          {% if not cat.is_income %}
+          <option value="{{ cat.id }}">
+            {{ cat.icon }} {{ cat.name }}
+          </option>
+          {% endif %}
+          {% endfor %}
+        </select>
+        <div style="font-size:12px;color:var(--text3);margin-top:5px;">
+          If you select a category, only transactions in that category
+          will count toward this budget.
+        </div>
+      </div>
+
+      <!-- CEILING + PERIOD -->
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Total ceiling (TND) *</label>
+          <input class="form-input" type="number"
+                 step="0.001" min="0"
+                 name="total_ceiling"
+                 placeholder="e.g. 1000"
+                 required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Period</label>
+          <select class="form-select" name="period">
+            <option value="monthly">Monthly</option>
+            <option value="weekly">Weekly</option>
+            <option value="custom">Custom</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- DATES -->
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Start date *</label>
+          <input class="form-input" type="date"
+                 name="start_date"
+                 value="{% now 'Y-m-01' %}"
+                 required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">End date (optional)</label>
+          <input class="form-input" type="date"
+                 name="end_date">
+          <div style="font-size:11px;color:var(--text3);margin-top:4px;">
+            Leave empty for ongoing budget
+          </div>
+        </div>
+      </div>
+
+      <!-- BUTTONS -->
+      <div style="display:flex;gap:10px;margin-top:8px;">
+        <button type="button" class="btn btn-ghost"
+                style="flex:1;justify-content:center;"
+                onclick="closeModal('modal-add-budget')">
+          Cancel
+        </button>
+        <button type="submit" class="btn btn-primary"
+                style="flex:1;justify-content:center;">
+          Create budget
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
