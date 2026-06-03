@@ -1,0 +1,658 @@
+{% extends 'base.html' %}
+{% block title %}{{ sb.name }}{% endblock %}
+{% block page_title %}{{ sb.emoji }} {{ sb.name }}{% endblock %}
+
+{% block content %}
+<div style="padding:28px;">
+
+  <!-- STATS ROW -->
+  <div class="grid-3" style="margin-bottom:20px;">
+
+    <!-- Total Budget -->
+    <div class="stat-card green">
+      <div class="stat-icon green">
+        <svg width="18" height="18" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round"
+                d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0"/>
+        </svg>
+      </div>
+      <div class="stat-label">Total Budget</div>
+      <div class="stat-value">
+        {{ sb.total_ceiling|floatformat:3 }} TND
+      </div>
+      <div class="stat-change">{{ sb.get_period_display }}</div>
+    </div>
+
+    <!-- Total Spent -->
+    <div class="stat-card blue">
+      <div class="stat-icon blue">
+        <svg width="18" height="18" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round"
+                d="M15 12H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/>
+        </svg>
+      </div>
+      <div class="stat-label">Total Spent</div>
+      <div class="stat-value">
+        {{ sb.total_spent|floatformat:3 }} TND
+      </div>
+      <div class="stat-change">{{ sb.percentage|floatformat:0 }}% used</div>
+    </div>
+
+    <!-- REMAINING  -->
+    <div class="stat-card {% if remaining < 0 %}red{% elif remaining < 200 %}orange{% else %}green{% endif %}">
+      <div class="stat-icon {% if remaining < 0 %}red{% elif remaining < 200 %}orange{% else %}green{% endif %}">
+        <svg width="18" height="18" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round"
+                d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+        </svg>
+      </div>
+      <div class="stat-label">Remaining</div>
+      <div class="stat-value"
+          style="{% if remaining < 0 %}color:var(--red);
+          {% elif remaining < 200 %}color:var(--orange);{% endif %}">
+        {{ remaining|floatformat:3 }} TND
+      </div>
+      <div class="stat-change">
+        {% if remaining < 0 %}
+          🚨 Over budget!
+        {% elif remaining < 200 %}
+          ⚠ Almost full
+        {% else %}
+          {{ sb.members.count }} member{{ sb.members.count|pluralize }}
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+
+  <!-- PROGRESS BAR -->
+  <div class="card" style="margin-bottom:20px;">
+    <div style="display:flex;align-items:center;
+                justify-content:space-between;margin-bottom:12px;">
+      <span class="section-title">Budget Progress</span>
+      <div style="text-align:right;">
+        <span style="font-size:13px;color:var(--text2);">
+          <strong style="color:var(--text);">
+            {{ sb.total_spent|floatformat:3 }} TND
+          </strong>
+          spent of
+          <strong style="color:var(--text);">
+            {{ sb.total_ceiling|floatformat:3 }} TND
+          </strong>
+        </span>
+        <span style="margin-left:8px;font-weight:800;font-size:14px;
+          color:{% if sb.percentage >= 100 %}var(--red)
+          {% elif sb.percentage >= 90 %}var(--orange)
+          {% else %}var(--accent){% endif %};">
+          {{ sb.percentage|floatformat:0 }}%
+        </span>
+      </div>
+    </div>
+
+    <!-- PROGRESS TRACK -->
+    <div class="progress-track" style="height:14px;border-radius:10px;">
+      <div class="progress-fill
+        {% if sb.percentage >= 100 %}over
+        {% elif sb.percentage >= 90 %}warn
+        {% else %}ok{% endif %}"
+        style="width:{% if sb.percentage > 100 %}100{% else %}{{ sb.percentage|floatformat:0 }}{% endif %}%;
+              transition:width .8s ease;">
+      </div>
+    </div>
+
+    <!-- REMAINING INFO ROW -->
+    <div style="display:flex;justify-content:space-between;
+                margin-top:10px;font-size:13px;">
+      <span style="color:var(--text3);">
+        Remaining:
+        <strong style="
+          color:{% if sb.remaining < 0 %}var(--red)
+          {% elif sb.remaining < 200 %}var(--orange)
+          {% else %}var(--accent2){% endif %};">
+          {{ sb.remaining|floatformat:3 }} TND
+        </strong>
+      </span>
+      <span style="color:var(--text3);">
+        Start: {{ sb.start_date|date:"M d, Y" }}
+        {% if sb.end_date %}
+          · End: {{ sb.end_date|date:"M d, Y" }}
+        {% endif %}
+      </span>
+    </div>
+
+    <!-- ALERT MESSAGES -->
+    {% if sb.remaining < 0 %}
+    <div style="margin-top:10px;padding:10px 14px;
+                background:rgba(248,113,113,0.1);
+                border:1px solid rgba(248,113,113,0.2);
+                border-radius:10px;font-size:13px;
+                color:var(--red);font-weight:600;">
+      🚨 Budget exceeded by
+      {% with over=sb.remaining|floatformat:3 %}
+        {{ over|slice:"1:" }} TND
+      {% endwith %}
+    </div>
+    {% elif sb.percentage >= 90 %}
+    <div style="margin-top:10px;padding:10px 14px;
+                background:rgba(251,146,60,0.1);
+                border:1px solid rgba(251,146,60,0.2);
+                border-radius:10px;font-size:13px;
+                color:var(--orange);font-weight:600;">
+      ⚠ Only {{ sb.remaining|floatformat:3 }} TND remaining —
+      consider reducing spending.
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- MAIN GRID -->
+  <div class="grid-65-35" style="margin-bottom:20px;">
+
+    <!-- LEFT: TRANSACTIONS -->
+    <div>
+      <div class="card" style="margin-bottom:20px;">
+        <div class="section-header">
+          <span class="section-title">
+            Transactions
+            <span style="color:var(--text3);font-weight:400;font-size:13px;">
+              ({{ transactions|length }})
+            </span>
+          </span>
+          <div class="topbar-spacer"></div>
+          <button class="btn btn-primary btn-sm"
+                  onclick="openModal('modal-add-tx')">
+            + Add transaction
+          </button>
+        </div>
+
+        {% for tx in transactions %}
+        <div style="background:var(--surface);border-radius:12px;
+                    margin-bottom:10px;overflow:hidden;">
+
+          <!-- TX ROW -->
+          <div style="display:flex;align-items:center;gap:12px;padding:14px;">
+            <div style="width:38px;height:38px;border-radius:10px;
+                        background:rgba(110,231,183,0.1);
+                        display:flex;align-items:center;
+                        justify-content:center;font-size:17px;flex-shrink:0;">
+              {{ tx.category.icon|default:"💰" }}
+            </div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-weight:600;font-size:14px;">
+                {{ tx.description }}
+              </div>
+              <div style="font-size:12px;color:var(--text3);margin-top:2px;">
+                <!-- AUTHOR IDENTIFICATION -->
+                👤 <strong style="color:var(--text2);">{{ tx.user.full_name }}</strong>
+                {% if tx.user == request.user %}
+                  <span style="color:var(--accent);font-size:11px;">(you)</span>
+                {% endif %}
+                · {{ tx.category.name|default:"Uncategorized" }}
+                · {{ tx.date }}
+              </div>
+              {% if tx.notes %}
+              <div style="font-size:12px;color:var(--text3);
+                          margin-top:3px;font-style:italic;">
+                "{{ tx.notes }}"
+              </div>
+              {% endif %}
+            </div>
+            <div style="text-align:right;flex-shrink:0;">
+              <div style="font-weight:700;font-size:15px;
+                {% if tx.type == 'income' %}color:var(--accent2){% endif %}">
+                {% if tx.type == 'income' %}+{% else %}−{% endif %}
+                {{ tx.amount|floatformat:3 }} TND
+              </div>
+              <div style="font-size:11px;color:var(--text3);margin-top:2px;">
+                <span class="tag {% if tx.type == 'income' %}green{% else %}orange{% endif %}"
+                      style="font-size:10px;padding:2px 7px;">
+                  {{ tx.get_type_display }}
+                </span>
+              </div>
+            </div>
+            <!-- ACTIONS -->
+            <div style="display:flex;gap:4px;flex-shrink:0;">
+              <button class="btn btn-ghost btn-sm"
+                      onclick="toggleComments('comments-{{ tx.pk }}')">
+                💬
+                {% if tx.comments.count %}
+                  <span style="color:var(--accent);">{{ tx.comments.count }}</span>
+                {% endif %}
+              </button>
+              {% if tx.user == request.user or is_owner %}
+              <form method="post" style="display:inline;"
+                    onsubmit="return confirm('Delete this transaction?')">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="delete_tx">
+                <input type="hidden" name="tx_id" value="{{ tx.pk }}">
+                <button type="submit" class="btn btn-danger btn-sm">✕</button>
+              </form>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- COMMENTS SECTION -->
+          <div id="comments-{{ tx.pk }}"
+               style="display:none;border-top:1px solid var(--border);
+                      padding:12px 14px;background:var(--bg2);">
+
+            <!-- Existing comments -->
+            {% for comment in tx.comments.all %}
+            <div style="display:flex;gap:8px;margin-bottom:10px;
+                        align-items:flex-start;">
+              <div style="width:28px;height:28px;border-radius:8px;
+                          background:linear-gradient(135deg,var(--accent),var(--blue));
+                          display:flex;align-items:center;
+                          justify-content:center;font-size:10px;
+                          font-weight:700;color:#0a0b0f;flex-shrink:0;">
+                {{ comment.user.initials }}
+              </div>
+              <div style="flex:1;background:var(--surface);
+                          border-radius:10px;padding:8px 12px;">
+                <div style="font-size:12px;font-weight:600;
+                            color:var(--text2);margin-bottom:3px;">
+                  {{ comment.user.full_name }}
+                  {% if comment.user == request.user %}
+                    <span style="color:var(--accent);font-size:10px;">(you)</span>
+                  {% endif %}
+                  <span style="color:var(--text3);font-weight:400;">
+                    · {{ comment.created_at|timesince }} ago
+                  </span>
+                </div>
+                <div style="font-size:13px;color:var(--text);">
+                  {{ comment.content }}
+                </div>
+              </div>
+              {% if comment.user == request.user %}
+              <form method="post" style="display:inline;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="delete_comment">
+                <input type="hidden" name="comment_id" value="{{ comment.pk }}">
+                <button type="submit"
+                        style="background:none;border:none;
+                               color:var(--text3);cursor:pointer;
+                               font-size:12px;padding:4px;">
+                  ✕
+                </button>
+              </form>
+              {% endif %}
+            </div>
+            {% empty %}
+            <div style="font-size:13px;color:var(--text3);
+                        margin-bottom:10px;font-style:italic;">
+              No comments yet. Be the first!
+            </div>
+            {% endfor %}
+
+            <!-- Add comment form -->
+            <form method="post" style="display:flex;gap:8px;margin-top:6px;">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="add_comment">
+              <input type="hidden" name="tx_id" value="{{ tx.pk }}">
+              <input class="form-input" type="text"
+                     name="content"
+                     placeholder="Write a comment..."
+                     style="flex:1;padding:7px 12px;font-size:13px;">
+              <button type="submit" class="btn btn-primary btn-sm">
+                Send
+              </button>
+            </form>
+          </div>
+        </div>
+        {% empty %}
+        <div class="empty">
+          <div class="empty-icon">💸</div>
+          <div class="empty-text">
+            No transactions yet. Add the first one!
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- CATEGORY SPENDING BREAKDOWN -->
+      {% if cat_spending %}
+      <div class="card">
+        <div class="section-header">
+          <span class="section-title">Spending by Category</span>
+        </div>
+        {% for cat in cat_spending %}
+        <div style="margin-bottom:12px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
+            <span style="font-size:16px;">
+              {{ cat.category__icon|default:"💰" }}
+            </span>
+            <span style="font-size:13px;font-weight:500;flex:1;">
+              {{ cat.category__name|default:"Uncategorized" }}
+            </span>
+            <span style="font-size:13px;font-weight:700;">
+              {{ cat.total|floatformat:3 }} TND
+            </span>
+          </div>
+          {% if sb.total_spent > 0 %}
+          {% widthratio cat.total sb.total_spent 100 as pct %}
+          <div class="progress-track" style="height:5px;">
+            <div class="progress-fill ok"
+                 style="width:{{ pct }}%;background:{{ cat.category__color|default:'var(--accent)' }}">
+            </div>
+          </div>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- RIGHT SIDEBAR -->
+    <div>
+
+      <!-- MEMBERS CARD -->
+      <div class="card" style="margin-bottom:16px;">
+        <div class="section-header">
+          <span class="section-title">Members</span>
+          <div class="topbar-spacer"></div>
+          <button class="btn btn-primary btn-sm"
+                  onclick="openModal('modal-invite')">
+            + Invite
+          </button>
+        </div>
+
+        <!-- Member spending -->
+        {% for ms in member_spending %}
+        <div style="display:flex;justify-content:space-between;
+                    padding:8px 0;border-bottom:1px solid var(--border);
+                    font-size:13px;">
+          <span style="color:var(--text2);">
+            {{ ms.user__first_name }} {{ ms.user__last_name }}
+          </span>
+          <span style="font-weight:700;">
+            {{ ms.total|floatformat:3 }} TND
+          </span>
+        </div>
+        {% endfor %}
+
+        <div style="margin-top:12px;display:flex;
+                    flex-direction:column;gap:8px;">
+          {% for member in members %}
+          <div style="display:flex;align-items:center;gap:10px;
+                      padding:10px;background:var(--surface);
+                      border-radius:10px;">
+            <div class="avatar"
+                 style="width:32px;height:32px;font-size:11px;">
+              {{ member.user.initials }}
+            </div>
+            <div style="flex:1;">
+              <div style="font-size:13px;font-weight:600;">
+                {{ member.user.full_name }}
+                {% if member.user == request.user %}
+                  <span style="color:var(--accent);font-size:10px;">
+                    (you)
+                  </span>
+                {% endif %}
+              </div>
+              <div style="font-size:11px;color:var(--text3);">
+                {{ member.user.email }}
+              </div>
+            </div>
+            <span class="tag {% if member.role == 'owner' %}purple{% else %}blue{% endif %}">
+              {{ member.role }}
+            </span>
+            <!-- REMOVE MEMBER (owner only, cannot remove self) -->
+            {% if is_owner and member.user != request.user %}
+            <form method="post" style="display:inline;"
+                  onsubmit="return confirm('Remove {{ member.user.full_name }}?')">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="remove_member">
+              <input type="hidden" name="member_id" value="{{ member.pk }}">
+              <button type="submit"
+                      style="background:none;border:none;
+                             color:var(--red);cursor:pointer;
+                             font-size:14px;padding:4px 6px;"
+                      title="Remove member">
+                ✕
+              </button>
+            </form>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- INVITE CODE CARD -->
+      <div class="card" style="margin-bottom:16px;">
+        <div class="section-title" style="margin-bottom:12px;">
+          Invite Code
+        </div>
+        <div style="text-align:center;background:rgba(110,231,183,0.08);
+                    border:2px dashed rgba(110,231,183,0.25);
+                    border-radius:12px;padding:16px;">
+          <div style="font-size:26px;font-weight:800;color:var(--accent);
+                      letter-spacing:5px;font-family:monospace;">
+            {{ sb.invite_code }}
+          </div>
+          <button onclick="copyCode('{{ sb.invite_code }}')"
+                  class="btn btn-ghost btn-sm"
+                  style="margin-top:8px;width:100%;justify-content:center;">
+            📋 Copy Code
+          </button>
+        </div>
+      </div>
+
+      <!-- CATEGORY CEILINGS (owner only) -->
+      {% if is_owner %}
+      <div class="card">
+        <div class="section-title" style="margin-bottom:12px;">
+          Set Category Ceilings
+        </div>
+        <div style="font-size:12px;color:var(--text3);margin-bottom:12px;">
+          Set spending limits per category for this shared budget.
+        </div>
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="set_category_ceiling">
+          <div class="form-group">
+            <label class="form-label">Category</label>
+            <select class="form-select" name="category_id">
+              {% for cat in categories %}
+              <option value="{{ cat.id }}">
+                {{ cat.icon }} {{ cat.name }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Ceiling (TND)</label>
+            <input class="form-input" type="number"
+                   step="0.001" min="0"
+                   name="ceiling"
+                   placeholder="e.g. 500" required>
+          </div>
+          <button type="submit" class="btn btn-primary"
+                  style="width:100%;justify-content:center;">
+            Set Ceiling
+          </button>
+        </form>
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+
+{% block modals %}
+
+<!-- ADD TRANSACTION MODAL -->
+<div class="modal-overlay" id="modal-add-tx"
+     onclick="closeModalOut(event,'modal-add-tx')">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">
+        Add transaction to {{ sb.name }}
+      </span>
+      <div class="modal-close"
+           onclick="closeModal('modal-add-tx')">✕</div>
+    </div>
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="add_tx">
+      <div class="form-group">
+        <label class="form-label">Type</label>
+        <div class="type-toggle">
+          <div class="type-btn expense active"
+               onclick="setType(this,'expense','tx_type')">
+            ↓ Expense
+          </div>
+          <div class="type-btn income"
+               onclick="setType(this,'income','tx_type')">
+            ↑ Income
+          </div>
+        </div>
+        <input type="hidden" name="type" id="tx_type" value="expense">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description *</label>
+        <input class="form-input" type="text"
+               name="description"
+               placeholder="e.g. Groceries, Rent..." required>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Amount (TND) *</label>
+          <input class="form-input" type="number"
+                 step="0.001" min="0"
+                 name="amount" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Date *</label>
+          <input class="form-input" type="date"
+                 name="date"
+                 value="{% now 'Y-m-d' %}" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Category</label>
+        <select class="form-select" name="category">
+          <option value="">-- Select category --</option>
+          {% for cat in categories %}
+          <option value="{{ cat.id }}">
+            {{ cat.icon }} {{ cat.name }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <textarea class="form-textarea" name="notes" rows="2"
+                  placeholder="Optional note..."></textarea>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button type="button" class="btn btn-ghost"
+                style="flex:1;justify-content:center;"
+                onclick="closeModal('modal-add-tx')">
+          Cancel
+        </button>
+        <button type="submit" class="btn btn-primary"
+                style="flex:1;justify-content:center;">
+          Add Transaction
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- INVITE FRIEND MODAL -->
+<div class="modal-overlay" id="modal-invite"
+     onclick="closeModalOut(event,'modal-invite')">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">
+        Invite Friend to {{ sb.emoji }} {{ sb.name }}
+      </span>
+      <div class="modal-close"
+           onclick="closeModal('modal-invite')">✕</div>
+    </div>
+
+    <div style="background:rgba(110,231,183,0.08);
+                border:1px solid rgba(110,231,183,0.15);
+                border-radius:12px;padding:14px;margin-bottom:20px;">
+      <div style="font-size:12px;color:var(--accent);
+                  font-weight:600;margin-bottom:5px;">
+        ℹ How it works
+      </div>
+      <div style="font-size:13px;color:var(--text2);line-height:1.6;">
+        Enter your friend's email. The system will check if they have
+        a BudgetFlow account. If found, they will receive an invitation
+        email with the invite code.
+      </div>
+    </div>
+
+    <form method="post" action="{% url 'invite_friend' sb.pk %}">
+      {% csrf_token %}
+      <div class="form-group">
+        <label class="form-label">Friend's Email Address *</label>
+        <input class="form-input" type="email"
+               name="friend_email"
+               placeholder="friend@example.com"
+               required>
+        <div style="font-size:12px;color:var(--text3);margin-top:5px;">
+          Your friend must have a BudgetFlow account.
+          If not found, you'll see an error.
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button type="button" class="btn btn-ghost"
+                style="flex:1;justify-content:center;"
+                onclick="closeModal('modal-invite')">
+          Cancel
+        </button>
+        <button type="submit" class="btn btn-primary"
+                style="flex:1;justify-content:center;">
+          📧 Send Invitation
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+// Toggle comments section
+function toggleComments(id) {
+  const el = document.getElementById(id);
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+// Copy invite code to clipboard
+function copyCode(code) {
+  navigator.clipboard.writeText(code).then(() => {
+    showToast('Invite code copied: ' + code);
+  }).catch(() => {
+    prompt('Copy this invite code:', code);
+  });
+}
+
+// Simple toast notification
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.style.cssText = `
+    position:fixed;bottom:24px;right:24px;
+    background:var(--surface2);
+    border:1px solid var(--border2);
+    border-radius:12px;padding:12px 18px;
+    font-size:13px;color:var(--text);
+    z-index:9999;
+    box-shadow:0 8px 24px rgba(0,0,0,0.3);
+    animation:toastIn .3s ease;
+  `;
+  t.textContent = '✓ ' + msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+</script>
+{% endblock %}

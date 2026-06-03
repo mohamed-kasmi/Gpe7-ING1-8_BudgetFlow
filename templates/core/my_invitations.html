@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% block title %}My Invitations{% endblock %}
+{% block page_title %}My Invitations{% endblock %}
+
+{% block content %}
+<div style="padding:28px;max-width:700px;">
+
+  {% if invitations %}
+  <div style="display:flex;flex-direction:column;gap:16px;">
+    {% for inv in invitations %}
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:16px;">
+
+        <!-- EMOJI -->
+        <div style="font-size:40px;flex-shrink:0;">
+          {{ inv.shared_budget.emoji }}
+        </div>
+
+        <!-- INFO -->
+        <div style="flex:1;">
+          <div style="font-family:var(--font-head);font-size:17px;
+                      font-weight:700;color:var(--text);margin-bottom:4px;">
+            {{ inv.shared_budget.name }}
+          </div>
+          <div style="font-size:13px;color:var(--text2);margin-bottom:4px;">
+            Invited by
+            <strong style="color:var(--accent);">
+              {{ inv.invited_by.full_name }}
+            </strong>
+            ({{ inv.invited_by.email }})
+          </div>
+          <div style="font-size:12px;color:var(--text3);">
+            {{ inv.shared_budget.members.count }} members ·
+            {{ inv.shared_budget.get_period_display }} ·
+            {{ inv.shared_budget.total_ceiling|floatformat:3 }} TND budget ·
+            Sent {{ inv.created_at|timesince }} ago
+          </div>
+        </div>
+
+        <!-- ACTIONS -->
+        <div style="display:flex;gap:8px;flex-shrink:0;">
+          <form method="post"
+                action="{% url 'accept_invitation' inv.pk %}">
+            {% csrf_token %}
+            <button type="submit" name="action" value="decline"
+                    class="btn btn-ghost">
+              Decline
+            </button>
+          </form>
+          <form method="post"
+                action="{% url 'accept_invitation' inv.pk %}">
+            {% csrf_token %}
+            <button type="submit" name="action" value="accept"
+                    class="btn btn-primary">
+              🎉 Accept
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- PROGRESS -->
+      <div style="margin-top:14px;padding-top:14px;
+                  border-top:1px solid var(--border);">
+        <div style="display:flex;justify-content:space-between;
+                    font-size:12px;color:var(--text3);margin-bottom:6px;">
+          <span>Budget used</span>
+          <span>
+            {{ inv.shared_budget.total_spent|floatformat:3 }} /
+            {{ inv.shared_budget.total_ceiling|floatformat:3 }} TND
+          </span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill
+            {% if inv.shared_budget.percentage >= 100 %}over
+            {% elif inv.shared_budget.percentage >= 90 %}warn
+            {% else %}ok{% endif %}"
+            style="width:{{ inv.shared_budget.percentage|floatformat:0 }}%">
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% else %}
+  <div class="card" style="text-align:center;padding:60px;">
+    <div style="font-size:48px;margin-bottom:16px;">📭</div>
+    <div style="font-family:var(--font-head);font-size:18px;
+                font-weight:700;color:var(--text);margin-bottom:8px;">
+      No pending invitations
+    </div>
+    <div style="font-size:14px;color:var(--text2);margin-bottom:20px;">
+      You don't have any pending budget invitations right now.
+    </div>
+    <a href="{% url 'shared_budgets' %}" class="btn btn-primary">
+      ← Back to Shared Budgets
+    </a>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

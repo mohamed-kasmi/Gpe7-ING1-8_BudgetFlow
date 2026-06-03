@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block title %}Accept Invitation{% endblock %}
+{% block page_title %}Budget Invitation{% endblock %}
+
+{% block content %}
+<div style="padding:28px;max-width:500px;margin:0 auto;">
+  <div class="card" style="text-align:center;padding:36px;">
+
+    <div style="font-size:56px;margin-bottom:16px;">
+      {{ budget.emoji }}
+    </div>
+
+    <div style="font-size:14px;color:var(--text2);margin-bottom:6px;">
+      <strong style="color:var(--accent);">
+        {{ invited_by.full_name }}
+      </strong>
+      invited you to join
+    </div>
+
+    <div style="font-family:var(--font-head);font-size:26px;
+                font-weight:800;color:var(--text);margin-bottom:16px;">
+      {{ budget.name }}
+    </div>
+
+    <div style="display:flex;gap:12px;justify-content:center;
+                flex-wrap:wrap;margin-bottom:20px;">
+      <div style="background:var(--surface);border-radius:10px;
+                  padding:8px 14px;font-size:13px;color:var(--text2);">
+        👥 {{ budget.members.count }} members
+      </div>
+      <div style="background:var(--surface);border-radius:10px;
+                  padding:8px 14px;font-size:13px;color:var(--text2);">
+        📅 {{ budget.get_period_display }}
+      </div>
+      <div style="background:var(--surface);border-radius:10px;
+                  padding:8px 14px;font-size:13px;color:var(--text2);">
+        💰 {{ budget.total_ceiling|floatformat:3 }} TND
+      </div>
+    </div>
+
+    <div style="height:1px;background:var(--border);margin:20px 0;"></div>
+
+    <form method="post">
+      {% csrf_token %}
+      <div style="display:flex;gap:10px;">
+        <button type="submit" name="action" value="decline"
+                class="btn btn-ghost" style="flex:1;justify-content:center;">
+          Decline
+        </button>
+        <button type="submit" name="action" value="accept"
+                class="btn btn-primary"
+                style="flex:1;justify-content:center;font-size:15px;">
+          🎉 Accept & Join
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

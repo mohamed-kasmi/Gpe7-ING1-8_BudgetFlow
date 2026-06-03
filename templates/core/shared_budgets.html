@@ -1,0 +1,328 @@
+{% extends 'base.html' %}
+{% block title %}Shared Budgets{% endblock %}
+{% block page_title %}Shared Budgets{% endblock %}
+
+{% block content %}
+<div style="padding:28px;">
+
+  <!-- TOP BAR -->
+  <div class="section-header" style="margin-bottom:20px;">
+    <div class="topbar-spacer"></div>
+    <button class="btn btn-ghost" onclick="openModal('modal-join')">
+      🔑 Join with code
+    </button>
+    <button class="btn btn-primary" style="margin-left:8px;"
+            onclick="openModal('modal-create-shared')">
+      + Create shared budget
+    </button>
+  </div>
+
+  <!-- PENDING INVITATIONS ALERT -->
+  {% if pending_invitations %}
+  <div class="alert-item info" style="margin-bottom:20px;">
+    <div class="alert-icon">📧</div>
+    <div class="alert-text" style="flex:1;">
+      <div class="alert-title">
+        You have {{ pending_invitations.count }}
+        pending invitation{{ pending_invitations.count|pluralize }}!
+      </div>
+      <div class="alert-desc">
+        {% for inv in pending_invitations %}
+          <strong style="color:var(--accent);">
+            {{ inv.invited_by.full_name }}
+          </strong>
+          invited you to join
+          <strong style="color:var(--text);">{{ inv.shared_budget.name }}</strong>
+          {% if not forloop.last %} · {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+    <a href="{% url 'my_invitations' %}"
+       class="btn btn-primary btn-sm" style="white-space:nowrap;">
+      View Invitations
+    </a>
+  </div>
+  {% endif %}
+
+  <!-- SHARED BUDGETS GRID -->
+  {% if shared_budgets %}
+  <div class="shared-grid">
+    {% for sb in shared_budgets %}
+    <div class="shared-card" onclick="window.location='{% url 'shared_budget_detail' sb.pk %}'">
+      <div class="shared-header">
+        <div>
+          <div class="shared-emoji">{{ sb.emoji }}</div>
+        </div>
+        <div style="flex:1;">
+          <div class="shared-name">{{ sb.name }}</div>
+          <div class="shared-members">
+            {{ sb.members.count }} member{{ sb.members.count|pluralize }} ·
+            {{ sb.get_period_display }}
+          </div>
+        </div>
+        <!-- MEMBER AVATARS -->
+        <div class="shared-avatars">
+          {% for member in sb.members.all|slice:":3" %}
+          <div class="shared-av"
+               style="background:linear-gradient(135deg,var(--accent),var(--accent3));"
+               title="{{ member.full_name }}">
+            {{ member.initials }}
+          </div>
+          {% endfor %}
+          {% if sb.members.count > 3 %}
+          <div class="shared-av"
+               style="background:var(--surface2);color:var(--text2);">
+            +{{ sb.members.count|add:"-3" }}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="shared-total">
+        {{ sb.total_ceiling|floatformat:3 }} TND
+      </div>
+      <div class="shared-period">
+        Budget ceiling · {{ sb.start_date|date:"M Y" }}
+      </div>
+
+      <div class="progress-track">
+        <div class="progress-fill
+          {% if sb.percentage >= 100 %}over
+          {% elif sb.percentage >= 90 %}warn
+          {% else %}ok{% endif %}"
+          style="width:{{ sb.percentage|floatformat:0 }}%">
+        </div>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;
+                  margin-top:8px;font-size:12px;color:var(--text3);">
+        <span>{{ sb.total_spent|floatformat:3 }} TND used</span>
+        <span>{{ sb.percentage|floatformat:0 }}%</span>
+      </div>
+
+      <!-- INVITE BUTTON -->
+      <div style="margin-top:12px;padding-top:12px;
+                  border-top:1px solid var(--border);">
+        <button class="btn btn-ghost btn-sm"
+                style="width:100%;justify-content:center;"
+                onclick="event.stopPropagation();openInviteModal({{ sb.pk }},'{{ sb.name }}','{{ sb.emoji }}')">
+          👤 + Invite Friend
+        </button>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% else %}
+  <div class="empty" style="padding:60px 20px;">
+    <div class="empty-icon">👥</div>
+    <div style="font-family:var(--font-head);font-size:18px;
+                font-weight:700;color:var(--text);margin-bottom:8px;">
+      No shared budgets yet
+    </div>
+    <div class="empty-text" style="margin-bottom:20px;">
+      Create a shared budget or join one with an invite code.
+    </div>
+    <button class="btn btn-primary"
+            onclick="openModal('modal-create-shared')">
+      + Create your first shared budget
+    </button>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+
+{% block modals %}
+
+<!-- ── CREATE SHARED BUDGET MODAL ── -->
+<div class="modal-overlay" id="modal-create-shared"
+     onclick="closeModalOut(event,'modal-create-shared')">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Create shared budget</span>
+      <div class="modal-close"
+           onclick="closeModal('modal-create-shared')">✕</div>
+    </div>
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="create">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Budget name *</label>
+          <input class="form-input" type="text" name="name"
+                 placeholder="e.g. Family Budget" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Emoji</label>
+          <input class="form-input" type="text" name="emoji"
+                 value="🏠" maxlength="5">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Total ceiling (TND) *</label>
+          <input class="form-input" type="number" step="0.001"
+                 min="0" name="total_ceiling"
+                 placeholder="5000" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Period</label>
+          <select class="form-select" name="period">
+            <option value="monthly">Monthly</option>
+            <option value="weekly">Weekly</option>
+            <option value="custom">Custom</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Start date *</label>
+          <input class="form-input" type="date" name="start_date"
+                 value="{% now 'Y-m-01' %}" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">End date</label>
+          <input class="form-input" type="date" name="end_date">
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:8px;">
+        <button type="button" class="btn btn-ghost"
+                style="flex:1;justify-content:center;"
+                onclick="closeModal('modal-create-shared')">
+          Cancel
+        </button>
+        <button type="submit" class="btn btn-primary"
+                style="flex:1;justify-content:center;">
+          Create budget
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+<!-- ── JOIN WITH CODE MODAL ── -->
+<div class="modal-overlay" id="modal-join"
+     onclick="closeModalOut(event,'modal-join')">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Join a shared budget</span>
+      <div class="modal-close" onclick="closeModal('modal-join')">✕</div>
+    </div>
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="join">
+      <div class="form-group">
+        <label class="form-label">Invite Code *</label>
+        <input class="form-input" type="text" name="invite_code"
+               placeholder="e.g. ABC12345"
+               style="letter-spacing:3px;text-transform:uppercase;
+                      font-size:18px;font-weight:700;text-align:center;"
+               required>
+        <div style="font-size:12px;color:var(--text3);margin-top:6px;">
+          Ask the budget owner for the invite code.
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button type="button" class="btn btn-ghost"
+                style="flex:1;justify-content:center;"
+                onclick="closeModal('modal-join')">
+          Cancel
+        </button>
+        <button type="submit" class="btn btn-primary"
+                style="flex:1;justify-content:center;">
+          Join budget
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+<!-- ── INVITE FRIEND MODAL ── -->
+<div class="modal-overlay" id="modal-invite-friend"
+     onclick="closeModalOut(event,'modal-invite-friend')">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="invite-modal-title">
+        Invite Friend
+      </span>
+      <div class="modal-close"
+           onclick="closeModal('modal-invite-friend')">✕</div>
+    </div>
+
+    <!-- INFO BOX -->
+    <div style="background:rgba(110,231,183,0.08);
+                border:1px solid rgba(110,231,183,0.15);
+                border-radius:12px;padding:14px;margin-bottom:20px;">
+      <div style="font-size:12px;color:var(--accent);
+                  font-weight:600;margin-bottom:6px;">
+        ℹ How it works
+      </div>
+      <div style="font-size:13px;color:var(--text2);line-height:1.6;">
+        Enter your friend's email. If they have a BudgetFlow account,
+        the system will send them an invitation email with the invite code.
+      </div>
+    </div>
+
+    <form method="post" id="invite-form">
+      {% csrf_token %}
+      <div class="form-group">
+        <label class="form-label">Friend's Email Address *</label>
+        <div style="position:relative;">
+          <input class="form-input" type="email"
+                 name="friend_email"
+                 id="friend-email-input"
+                 placeholder="friend@example.com"
+                 required
+                 style="padding-right:44px;">
+          <div style="position:absolute;right:12px;top:50%;
+                      transform:translateY(-50%);font-size:18px;">
+            📧
+          </div>
+        </div>
+        <div style="font-size:12px;color:var(--text3);margin-top:5px;">
+          Your friend must have a BudgetFlow account to receive the invitation.
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:8px;">
+        <button type="button" class="btn btn-ghost"
+                style="flex:1;justify-content:center;"
+                onclick="closeModal('modal-invite-friend')">
+          Cancel
+        </button>
+        <button type="submit" class="btn btn-primary"
+                style="flex:1;justify-content:center;">
+          📧 Send Invitation
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+// Open invite modal with budget info
+function openInviteModal(budgetId, budgetName, budgetEmoji) {
+  // Update modal title
+  document.getElementById('invite-modal-title').textContent =
+    budgetEmoji + ' Invite to ' + budgetName;
+
+  // Update form action
+  document.getElementById('invite-form').action =
+    '/shared-budgets/' + budgetId + '/invite/';
+
+  // Clear email input
+  document.getElementById('friend-email-input').value = '';
+
+  // Open modal
+  openModal('modal-invite-friend');
+}
+</script>
+{% endblock %}
