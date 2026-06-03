@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block title %}Edit Transaction{% endblock %}
+{% block page_title %}Edit Transaction{% endblock %}
+
+{% block content %}
+<div style="padding:28px;max-width:600px;">
+  <div class="card">
+    <div class="section-title" style="margin-bottom:20px;">Edit transaction</div>
+    <form method="post">
+      {% csrf_token %}
+      <div class="form-group">
+        <label class="form-label">Type</label>
+        <select class="form-select" name="type">
+          <option value="income" {% if tx.type == 'income' %}selected{% endif %}>↑ Income</option>
+          <option value="expense" {% if tx.type == 'expense' %}selected{% endif %}>↓ Expense</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <input class="form-input" type="text" name="description" value="{{ tx.description }}" required>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Amount (TND)</label>
+          <input class="form-input" type="number" step="0.001" name="amount" value="{{ tx.amount }}" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Date</label>
+          <input class="form-input" type="date" name="date" value="{{ tx.date|date:'Y-m-d' }}" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <textarea class="form-textarea" name="notes">{{ tx.notes }}</textarea>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <a href="{% url 'transactions' %}" class="btn btn-ghost" style="flex:1;justify-content:center;">Cancel</a>
+        <button type="submit" class="btn btn-primary" style="flex:1;justify-content:center;">Save changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
